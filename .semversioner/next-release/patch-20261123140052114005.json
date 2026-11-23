@@ -1,0 +1,4 @@
+{
+  "type": "patch",
+  "description": "Return an empty dict from try_parse_json_object for non-object JSON so global search falls back instead of raising AttributeError."
+}

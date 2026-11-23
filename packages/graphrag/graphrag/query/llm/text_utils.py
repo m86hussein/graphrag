@@ -58,8 +58,15 @@ def try_parse_json_object(input: str, verbose: bool = True) -> tuple[str, dict]:
         if verbose:
             logger.warning("Error decoding faulty json, attempting repair")
 
-    if result:
-        return input, result
+    if isinstance(result, dict):
+        if result:
+            return input, result
+    elif result is not None:
+        # Valid JSON that is not an object (e.g. a bare array) must not be
+        # "repaired" into one of its elements; callers expect a dict.
+        if verbose:
+            logger.warning("not expected dict type. type=%s", type(result))
+        return input, {}
 
     pattern = r"\{(.*)\}"
     match = re.search(pattern, input, re.DOTALL)
@@ -98,11 +105,9 @@ def try_parse_json_object(input: str, verbose: bool = True) -> tuple[str, dict]:
             if verbose:
                 logger.exception("error loading json, json=%s", input)
             return input, {}
-        else:
-            if not isinstance(result, dict):
-                if verbose:
-                    logger.exception("not expected dict type. type=%s:", type(result))
-                return input, {}
-            return input, result
-    else:
-        return input, result
+
+    if not isinstance(result, dict):
+        if verbose:
+            logger.warning("not expected dict type. type=%s", type(result))
+        return input, {}
+    return input, result
